@@ -34,11 +34,32 @@ fn main() {
     };
     //parse cli
     let cli = Cli::parse();
+    //run the main program
     let pac = get_package(cli.name, &c);
-    print!("{}", pac);
-
+    let pkg = get_data(pac);
+    pkg_print(pkg);
 }
-
+///Print out pkg data
+fn pkg_print(pkg: Package){
+println!("Package name: {0}", pkg.name);
+println!("Last updated: {0}", pkg.date);
+println!("Repository: {0}", pkg.repository)
+}
+///Extract pkg data from json
+fn get_data(j: JsonValue) -> Package{
+if(!(j["results"].is_null())){
+let results = j["results"][0].clone();
+let pkg = Package{
+name: results["pkgname"].to_string(),
+date: results["last_update"].to_string(),
+repository: results["repo"].to_string(),
+};
+return pkg;
+}
+else{
+    panic!("Unable to get results.");
+}
+}
 
 ///Gets list of packages named exactly the input
 fn get_package(name: String, client: &Client) -> JsonValue{
