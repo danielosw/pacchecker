@@ -47,7 +47,7 @@ println!("Repository: {0}", pkg.repository)
 }
 ///Extract pkg data from json
 fn get_data(j: JsonValue) -> Package{
-if(!(j["results"].is_null())){
+if(!(j["results"].is_null() || j["results"][0].is_null())){
 let results = j["results"][0].clone();
 let pkg = Package{
 name: results["pkgname"].to_string(),
