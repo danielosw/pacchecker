@@ -1,8 +1,6 @@
 use reqwest::{blocking::{self, Client}};
 use clap::Parser;
 use json::{self, JsonValue};
-// I like camelCase :)
-#[allow(non_snake_case)]
 
 //Setup clap
 #[derive(Parser)]
@@ -20,7 +18,7 @@ struct Cli {
 ///pacman package struct
 struct Package {
     name: String,
-    //I don't want to deal with data conversion so we are storing this in a string.
+    //I don't want to deal with date conversion so we are storing this in a string.
     date: String,
     repository: String,
 
@@ -36,12 +34,14 @@ fn main() {
     };
     //parse cli
     let cli = Cli::parse();
-    let pac = GetPackage(cli.name, &c);
+    let pac = get_package(cli.name, &c);
     print!("{}", pac);
 
 }
+
+
 ///Gets list of packages named exactly the input
-fn GetPackage(name: String, client: &Client) -> JsonValue{
+fn get_package(name: String, client: &Client) -> JsonValue{
 let content_result =  client.get("https://archlinux.org/packages/search/json/?name=".to_owned()+&name).send();
 let content = match content_result {
     Ok(response) => response,
