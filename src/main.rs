@@ -1,4 +1,4 @@
-use reqwest::{blocking::{self, Client}};
+use reqwest::blocking::Client;
 use clap::Parser;
 use json::{self, JsonValue};
 
@@ -9,10 +9,6 @@ struct Cli {
     ///Required name of package.
     #[arg(short,long)]
     name: String,
-
-    ///Include AUR
-    #[arg(short, long, default_value_t = false)]
-    AUR: bool,
 
 }
 ///pacman package struct
@@ -47,14 +43,13 @@ println!("Repository: {0}", pkg.repository)
 }
 ///Extract pkg data from json
 fn get_data(j: JsonValue) -> Package{
-if(!(j["results"].is_null() || j["results"][0].is_null())){
+if !(j["results"].is_null() || j["results"][0].is_null()) {
 let results = j["results"][0].clone();
-let pkg = Package{
+Package{
 name: results["pkgname"].to_string(),
 date: results["last_update"].to_string(),
 repository: results["repo"].to_string(),
-};
-return pkg;
+}
 }
 else{
     panic!("Unable to get results.");
@@ -70,5 +65,5 @@ let content = match content_result {
     Err(error) => panic!("Unable to get page at https://archlinux.org/packages/search/json/?name={name:?}: {error:?}"),
 };
 let json_content = json::parse(&content.text().unwrap());
-return json_content.unwrap();
+json_content.unwrap()
 }
