@@ -16,6 +16,10 @@ struct Package {
     //I don't want to deal with date conversion so we are storing this in a string.
     date: String,
     repository: String,
+    architecture: String,
+    version: String,
+    description: String,
+    depends: Vec<String>,
 
 }
 fn main() {
@@ -28,36 +32,59 @@ fn main() {
         Err(error) => panic!("Could not construct client: {error:?}"),
     };
     //parse cli
-    //let cli = Cli::parse();
+    let cli = Cli::parse();
     //run the main program
-    let mut pac = get_packages(&c);
-    for item in pac{
-        for (i, j) in item.entries(){
-            println!("{}",i);
+    let pac = get_packages(&c);
+    let mut packages: Vec<Package> = pac.into_iter().map(|m| get_data(m)).collect();
+    let mut i = 0;
+    while i < packages.len(){
+    let mut flag = false;
+    if !packages.get(i).unwrap().depends.contains(&"kio".to_string()){
+        packages.remove(i);
+        if i == 0{
+            flag = true;
         }
+        if !flag{
+            i -= 1;
+        }
+    }
+    if !flag{
+        i +=1;
+    }
+    }
+    for i in packages{
+        pkg_print(i);
+        println!("\n\n")
     }
 }
 ///Print out pkg data
 fn pkg_print(pkg: Package){
+let mut depend: String = "".to_string();
+for i in pkg.depends{
+    depend += &(" ".to_owned() + &i);
+}
 println!("Package name: {0}", pkg.name);
-println!("Last updated: {0}", pkg.date);
-println!("Repository: {0}", pkg.repository)
+//println!("Last updated: {0}", pkg.date);
+//println!("Repository: {0}", pkg.repository);
+//println!("Architecture: {0}", pkg.architecture);
+//println!("Version: {0}", pkg.version);
+println!("Description: {0}", pkg.description);
+//println!("depends: {0}", depend);
+
 }
 ///Extract pkg data from json
 fn get_data(j: JsonValue) -> Package{
-if !(j["results"].is_null() || j["results"][0].is_null()) {
-let results = j["results"][0].clone();
 Package{
-name: results["pkgname"].to_string(),
-date: results["last_update"].to_string(),
-repository: results["repo"].to_string(),
-}
-}
-else{
-    panic!("Unable to get results.");
-}
-}
+name: j["pkgname"].to_string(),
+date: j["last_update"].to_string(),
+repository: j["repo"].to_string(),
+architecture: j["arch"].to_string(),
+version: j["pkgver"].to_string(),
+description: j["pkgdesc"].to_string(),
+depends: j["depends"].members().map(|m| m.to_string()).collect(),
 
+}
+}
 ///Gets list of packages named exactly the input
 fn get_packages(client: &Client) -> Vec<JsonValue>{
 
@@ -70,13 +97,13 @@ let content = match content_result {
 let mut cached = true;
 let json_content = unwap_json(content.text().unwrap());
 let x: u8= json_content["num_pages"].to_string().parse().unwrap();
-let test = fs::read_dir(current_dir().unwrap().to_str().unwrap().to_string()+&"/cache/").unwrap();
+let test = fs::read_dir(current_dir().unwrap().to_str().unwrap().to_string()+"/cache/").unwrap();
 let coolvec: Vec<String> = test.map(|m| m.unwrap().path().to_string_lossy().to_string()).collect();
 if coolvec.len().to_string() != x.to_string(){
     cached = false;
 }
 let mut jsonvec: Vec<JsonValue> = vec![];
-if cached ==false{let mut i = 1;
+if !cached{let mut i = 1;
 while i <= x{
 let url = "https://archlinux.org/packages/search/json/?q=&page=".to_string()+&i.to_string();
 println!("{}",url);
@@ -94,17 +121,17 @@ i += 1;
 for i in coolvec{
     let temp = fs::read_to_string(i).unwrap();
     let jso = unwap_json(temp);
-    let test = jso["results"].clone();
-    jsonvec.push(test);
+    let mut test: Vec<JsonValue> = jso["results"].members().map(|m| m.to_owned()).collect();
+    jsonvec.append(&mut test);
 }
-return jsonvec;
+jsonvec
 }
 
 fn unwap_json(src: String) -> JsonValue{
     let unsafe_json = json::parse(&src);
-    let json_content = match unsafe_json{
+    
+    match unsafe_json{
         Ok(jso) => jso,
         Err(error) => panic!("Unable to parse json: {error:?}"),
-    };
-    return json_content
+    }
 }
